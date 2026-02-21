@@ -51,7 +51,8 @@ const Button = ({ children, onClick, variant = 'primary', className = '', icon: 
     secondary: "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700",
     danger: "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20",
     whatsapp: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20",
-    outline: "border border-slate-700 hover:bg-slate-800 text-slate-400"
+    outline: "border border-slate-700 hover:bg-slate-800 text-slate-400",
+    emerald: "bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20"
   };
 
   return (
@@ -214,7 +215,6 @@ export default function App() {
     const name = userName && userName !== 'Guardian' ? userName : "I";
     const oldNum = userPhone;
     const newNum = broadcastNewNumber || "[My New Number]";
-
     const message = `Hello! ${name} have changed my number.\n\nOld: ${oldNum}\nNew: ${newNum}\n\nPlease update your contact list! 📱\n\n(Secured by NumberGuard)`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
@@ -309,7 +309,6 @@ export default function App() {
             </form>
           </div>
 
-          {/* --- WATERMARK FOOTER (LOGIN SCREEN) --- */}
           <div className="mt-12 text-center">
             <div className="flex items-center justify-center gap-2 text-slate-600 mb-2 opacity-50">
               <Shield size={14} />
@@ -358,10 +357,6 @@ export default function App() {
               </div>
             </button>
             <div className="h-10 w-px bg-slate-800 hidden sm:block"></div>
-            <div className="hidden lg:flex flex-col items-end">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Linked ID</span>
-              <span className="text-xs font-mono text-indigo-400">{userPhone}</span>
-            </div>
             <button 
               onClick={() => { localStorage.clear(); window.location.reload(); }}
               className="p-2.5 rounded-xl bg-slate-900 hover:bg-red-500/10 hover:text-red-400 transition-all text-slate-500"
@@ -389,7 +384,7 @@ export default function App() {
               Welcome back, <span className="font-bold underline decoration-indigo-300">{userName}</span>. Indian telecom numbers are recycled after 90 days. Secure your linked services today.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button onClick={handleScan} loading={scanning} className="bg-white text-indigo-600 hover:bg-slate-100 px-8 py-4" icon={Search}>
+              <Button onClick={handleScan} loading={scanning} variant="emerald" className="px-8 py-4" icon={Search}>
                 {scanning ? 'Detecting Services...' : 'Scan Ecosystem'}
               </Button>
               <Button variant="outline" className="bg-indigo-500/20 border-indigo-400/30 text-white hover:bg-indigo-500/30" onClick={() => setShowAddModal(true)} icon={Plus}>
@@ -492,7 +487,7 @@ export default function App() {
         )}
       </main>
 
-      {/* --- WATERMARK FOOTER (DASHBOARD) --- */}
+      {/* --- WATERMARK FOOTER --- */}
       <footer className="mt-20 py-12 border-t border-slate-800/50 text-center">
         <div className="flex items-center justify-center gap-2 text-slate-600 mb-3 opacity-50">
           <Shield size={16} />
