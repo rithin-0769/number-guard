@@ -1,52 +1,31 @@
-#🛡️ NumberGuard
-Status: 🚧 Backend in heavy development. 🛠️
+NumberGuard 🛡️
+Secure your digital identity when changing phone numbers.
 
-Currently a polished Frontend demo powered by React (Client-side).
+NumberGuard is a privacy-focused migration tool designed for the Indian digital ecosystem. It helps users track and manage accounts linked to their phone numbers (Banks, UPI, Government IDs, Social Media) before their old SIM card is recycled by telecom operators.
 
-NumberGuard is a privacy-first utility designed to help you manage and track the phone numbers you provide to various services. No more wondering who leaked your data—know exactly which service is calling.
+🇮🇳 The Problem
+In India, telecom operators are permitted to recycle mobile numbers after 90 days of inactivity. If a user hasn't unlinked their Bank accounts, UPI IDs, or Aadhaar from that number, the new owner of the SIM could potentially gain access to their sensitive accounts.
 
-#⚡ Current Progress: The Frontend
-The UI is live and interactive, showcasing the core user experience. I am currently focusing on the Backend infrastructure to handle robust data persistence and security.
+✨ Core Features
+🚀 Smart Scanner: Automatically identifies common high-risk services used in India (Aadhaar, SBI, IRCTC, Paytm, PhonePe, etc.).
 
-🚀 Tech Stack
-Frontend: React.js
+⚠️ Recycle Risk Visualizer: Highlights "Critical" services and warns users about the 90-day recycling deadline.
 
-Styling: Tailwind CSS / Framer Motion
+🛑 UPI Safety Protocol: Interactive warnings for financial apps to ensure UPI IDs are deregistered before the number is abandoned.
 
+📢 WhatsApp Broadcaster: Easily notify your entire contact list about your new number with a pre-formatted message.
+
+💾 Local Vault: All your data is stored locally in your browser’s localStorage for maximum privacy.
+
+🛠️ Tech Stack
+Frontend: React.js + Vite
+
+Styling: Tailwind CSS
+
+Animations: Framer Motion
+
+Icons: Lucide React
 
 Deployment: Vercel
 
-#🛠️ The Roadmap
-Phase	Description	Status
-Phase 1	UI/UX Design & Frontend Prototyping	✅ Complete
-Phase 2	Client-side Supabase Integration	🏗️ In Progress
-Phase 3	Robust Backend Logic & API Security	⚡ Current Focus
-Phase 4	Advanced Analytics & Privacy Reports	📅 Upcoming
-
-
-#🏗️ Backend Deep-Dive
-I'm currently working under the hood to transition from a client-heavy approach to a dedicated backend architecture. This includes:
-
-Optimizing server-side functions.
-
-Hardening security protocols for sensitive data.
-
-Streamlining database schemas for faster queries.
-
-#💻 Local Development
-To see the frontend in action:
-
-Clone the repo:
-
-git clone https://github.com/your-username/NumberGuard.git
-
-
-Install dependencies:
-npm install
-
-
-Run the dev server:
-npm run dev
-
-
-Developed with a focus on privacy and clean code.
+Built with precision by Ravoori Rithin © 2026
