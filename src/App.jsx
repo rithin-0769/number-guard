@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, 
   Smartphone, 
@@ -7,563 +8,626 @@ import {
   ExternalLink, 
   AlertTriangle, 
   RefreshCw, 
-  Lock,
-  Plus,
-  Trash2,
-  Menu,
-  X,
-  MessageSquare,
-  Share2,
-  AlertOctagon,
-  Clock,
-  Database,
+  Plus, 
+  Trash2, 
+  X, 
+  MessageSquare, 
+  Share2, 
+  AlertOctagon, 
+  Clock, 
+  Database, 
   LogOut,
-  ChevronRight
+  User,
+  Edit2,
+  Download,
+  Upload,
+  Filter,
+  ChevronDown
 } from 'lucide-react';
 
-// --- MVP CONFIGURATION: "INTELLIGENCE" DATABASE ---
-// This static list provides the core value: knowing where to go.
+// --- DATABASE ---
 const COMMON_SERVICES = [
-  { 
-    name: 'Google', 
-    category: 'Tech', 
-    riskLevel: 'High',
-    updateUrl: 'https://myaccount.google.com/phone',
-  },
-  { 
-    name: 'Aadhaar (UIDAI)', 
-    category: 'Government', 
-    riskLevel: 'Critical',
-    updateUrl: 'https://myaadhaar.uidai.gov.in/',
-  },
-  { 
-    name: 'SBI (State Bank of India)', 
-    category: 'Finance', 
-    riskLevel: 'Critical',
-    updateUrl: 'https://www.onlinesbi.sbi/',
-  },
-  { 
-    name: 'IRCTC', 
-    category: 'Travel', 
-    riskLevel: 'High',
-    updateUrl: 'https://www.irctc.co.in/nget/train-search',
-  },
-  { 
-    name: 'Amazon India', 
-    category: 'Shopping', 
-    riskLevel: 'Medium',
-    updateUrl: 'https://www.amazon.in/gp/css/homepage.html',
-  },
-  { 
-    name: 'Flipkart', 
-    category: 'Shopping', 
-    riskLevel: 'Medium',
-    updateUrl: 'https://www.flipkart.com/account/settings',
-  },
-  { 
-    name: 'Paytm', 
-    category: 'Finance', 
-    riskLevel: 'Critical',
-    isUpi: true,
-    updateUrl: 'https://paytm.com/settings/profile',
-  },
-  { 
-    name: 'PhonePe', 
-    category: 'Finance', 
-    riskLevel: 'Critical',
-    isUpi: true,
-    updateUrl: 'https://www.phonepe.com/',
-  },
-  { 
-    name: 'Zomato', 
-    category: 'Food', 
-    riskLevel: 'Low',
-    updateUrl: 'https://www.zomato.com/users/edit',
-  },
-  { 
-    name: 'Swiggy', 
-    category: 'Food', 
-    riskLevel: 'Low',
-    updateUrl: 'https://www.swiggy.com/my-account',
-  }
+  { name: 'Google', category: 'Tech', riskLevel: 'High', updateUrl: 'https://myaccount.google.com/phone' },
+  { name: 'Aadhaar (UIDAI)', category: 'Govt', riskLevel: 'Critical', updateUrl: 'https://myaadhaar.uidai.gov.in/' },
+  { name: 'SBI Bank', category: 'Finance', riskLevel: 'Critical', updateUrl: 'https://www.onlinesbi.sbi/' },
+  { name: 'IRCTC', category: 'Travel', riskLevel: 'High', updateUrl: 'https://www.irctc.co.in/' },
+  { name: 'Amazon', category: 'Shopping', riskLevel: 'Medium', updateUrl: 'https://www.amazon.in/gp/css/homepage.html' },
+  { name: 'Paytm', category: 'Finance', riskLevel: 'Critical', isUpi: true, updateUrl: 'https://paytm.com/' },
+  { name: 'PhonePe', category: 'Finance', riskLevel: 'Critical', isUpi: true, updateUrl: 'https://www.phonepe.com/' },
+  { name: 'WhatsApp', category: 'Social', riskLevel: 'High', updateUrl: 'https://www.whatsapp.com/settings' }
 ];
 
-// --- UI COMPONENTS ---
+// --- ANIMATION VARIANTS ---
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 }
+};
 
-const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, disabled = false }) => {
-  const baseStyle = "px-4 py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-2 active:scale-95 disabled:active:scale-100 disabled:cursor-not-allowed disabled:opacity-50";
+const staggerContainer = {
+  animate: { transition: { staggerChildren: 0.05 } }
+};
+
+// --- COMPONENTS ---
+
+const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, disabled = false, loading = false }) => {
   const variants = {
-    primary: "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20",
+    primary: "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20",
     secondary: "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700",
     danger: "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20",
-    whatsapp: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-500/20",
-    outline: "border border-slate-600 hover:bg-slate-800 text-slate-300"
+    whatsapp: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20",
+    outline: "border border-slate-700 hover:bg-slate-800 text-slate-400"
   };
 
   return (
-    <button onClick={onClick} disabled={disabled} className={`${baseStyle} ${variants[variant]} ${className}`}>
-      {Icon && <Icon size={18} />}
+    <motion.button 
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick} 
+      disabled={disabled || loading} 
+      className={`px-4 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg ${variants[variant]} ${className}`}
+    >
+      {loading ? <RefreshCw className="animate-spin" size={18} /> : Icon && <Icon size={18} />}
       {children}
-    </button>
+    </motion.button>
   );
 };
 
-const StatusBadge = ({ status }) => {
-  if (status === 'updated') {
-    return <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs border border-emerald-500/20 flex items-center gap-1"><CheckCircle size={10} /> Done</span>;
-  }
-  return <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 text-xs border border-amber-500/20 flex items-center gap-1"><Clock size={10} /> Pending</span>;
-};
-
-const ServiceCard = ({ service, onUpdateStatus, onDelete, onMarkDoneRequest }) => {
-  return (
-    <div className={`
-      relative overflow-hidden rounded-xl border transition-all duration-300 group
-      ${service.status === 'updated' 
-        ? 'bg-slate-900/30 border-emerald-900/30' 
-        : 'bg-slate-900 border-slate-800 hover:border-indigo-500/30'
-      }
-    `}>
-      {/* Card Header */}
-      <div className="p-5 flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className={`
-            w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold shadow-inner
-            ${service.status === 'updated' ? 'bg-emerald-900/20 text-emerald-500' : 'bg-slate-800 text-slate-400'}
-          `}>
-            {service.name[0]}
-          </div>
-          
-          <div>
-            <h3 className={`font-bold text-lg flex items-center gap-2 ${service.status === 'updated' ? 'text-slate-400' : 'text-slate-100'}`}>
-              {service.name}
-            </h3>
-            <div className="flex flex-wrap items-center gap-2 mt-1.5">
-              <StatusBadge status={service.status} />
-              {service.riskLevel === 'Critical' && (
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/10 text-red-400 border border-red-500/20">CRITICAL</span>
-              )}
-              {service.isUpi && (
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">UPI</span>
-              )}
-            </div>
-          </div>
+const ServiceCard = ({ service, onUpdateStatus, onDelete, onMarkDoneRequest }) => (
+  <motion.div 
+    variants={fadeInUp}
+    layout
+    className={`relative overflow-hidden rounded-2xl border transition-all duration-300 ${
+      service.status === 'updated' 
+      ? 'bg-emerald-500/5 border-emerald-500/20 shadow-none opacity-80' 
+      : 'bg-slate-900/50 backdrop-blur-sm border-slate-800 hover:border-indigo-500/50 shadow-xl'
+    }`}
+  >
+    <div className="p-5">
+      <div className="flex justify-between items-start mb-4">
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold ${
+          service.status === 'updated' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/10 text-indigo-400'
+        }`}>
+          {service.name[0]}
         </div>
-
-        <button 
-          onClick={() => onDelete(service.id)}
-          className="text-slate-600 hover:text-red-400 transition-colors p-1"
-        >
+        <button onClick={() => onDelete(service.id)} className="text-slate-600 hover:text-red-400 transition-colors p-1">
           <Trash2 size={16} />
         </button>
       </div>
 
-      {/* Card Actions */}
-      <div className="bg-slate-950/30 p-3 flex gap-2 border-t border-white/5">
+      <h3 className={`font-bold text-lg mb-1 ${service.status === 'updated' ? 'text-slate-400' : 'text-white'}`}>
+        {service.name}
+      </h3>
+      
+      <div className="flex flex-wrap gap-2 mb-4">
+        {service.riskLevel === 'Critical' && (
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider bg-red-500/10 text-red-500 border border-red-500/20 uppercase">Critical</span>
+        )}
+        <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wider border uppercase ${
+          service.status === 'updated' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'
+        }`}>
+          {service.status === 'updated' ? 'Secured' : 'Pending'}
+        </span>
+      </div>
+
+      <div className="flex gap-2">
         <a 
           href={service.updateUrl} 
           target="_blank" 
           rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 text-sm bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 py-2 rounded-lg transition-colors font-medium"
+          className="flex-1 flex items-center justify-center gap-2 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white py-2.5 rounded-lg transition-all"
         >
-          Update <ExternalLink size={12} />
+          Portal <ExternalLink size={12} />
         </a>
         
         {service.status === 'pending' ? (
           <button 
             onClick={() => onMarkDoneRequest(service)}
-            className="flex-1 flex items-center justify-center gap-2 text-sm bg-slate-800 text-slate-300 hover:bg-emerald-600 hover:text-white py-2 rounded-lg transition-colors font-medium"
+            className="flex-1 text-xs font-bold bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white py-2.5 rounded-lg transition-all"
           >
             Mark Done
           </button>
         ) : (
           <button 
             onClick={() => onUpdateStatus(service.id, 'pending')}
-            className="flex-1 flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-slate-300 py-2 rounded-lg transition-colors font-medium"
+            className="flex-1 text-xs font-bold text-slate-500 hover:text-slate-300 py-2.5"
           >
             Undo
           </button>
         )}
       </div>
     </div>
-  );
-};
-
-// --- MAIN APP LOGIC ---
+  </motion.div>
+);
 
 export default function App() {
-  // State: Identity
+  // --- CORE STATE ---
   const [userPhone, setUserPhone] = useState(null);
-  
-  // State: Data
+  const [userName, setUserName] = useState('');
   const [myServices, setMyServices] = useState([]);
+  
+  // --- UI STATE ---
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
-  
-  // State: UI & Modals
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState('All');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [showUpiWarning, setShowUpiWarning] = useState(null);
   
-  // State: Forms
+  // --- FORM STATE ---
   const [inputPhone, setInputPhone] = useState('');
+  const [tempName, setTempName] = useState('');
   const [newServiceName, setNewServiceName] = useState('');
   const [broadcastNewNumber, setBroadcastNewNumber] = useState('');
 
-  // --- 1. PERSISTENCE LAYER (LocalStorage) ---
-  
+  // --- INITIALIZATION ---
   useEffect(() => {
-    const storedPhone = localStorage.getItem('ng_mvp_user');
+    const storedPhone = localStorage.getItem('ng_user');
+    const storedName = localStorage.getItem('ng_user_name');
     if (storedPhone) {
       setUserPhone(storedPhone);
-      loadVault(storedPhone);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
-  const loadVault = (phone) => {
-    setLoading(true);
-    try {
-      const data = localStorage.getItem(`ng_mvp_data_${phone}`);
-      if (data) {
-        setMyServices(JSON.parse(data));
-      } else {
-        setMyServices([]);
-      }
-    } catch (e) {
-      console.error("Corrupt data", e);
+      setUserName(storedName || 'Guardian');
+      const data = localStorage.getItem(`ng_data_${storedPhone}`);
+      if (data) setMyServices(JSON.parse(data));
     }
     setLoading(false);
-  };
+  }, []);
 
+  // --- PERSISTENCE ---
   const saveVault = (phone, services) => {
-    localStorage.setItem(`ng_mvp_data_${phone}`, JSON.stringify(services));
+    localStorage.setItem(`ng_data_${phone}`, JSON.stringify(services));
     setMyServices(services);
   };
 
-  // --- 2. AUTHENTICATION (Local) ---
-
   const handleLogin = (e) => {
     e.preventDefault();
-    if (!inputPhone || inputPhone.length < 10) return;
+    if (inputPhone.length < 10) return;
     const formatted = inputPhone.startsWith('+91') ? inputPhone : `+91${inputPhone}`;
-    
-    localStorage.setItem('ng_mvp_user', formatted);
+    localStorage.setItem('ng_user', formatted);
+    localStorage.setItem('ng_user_name', tempName || 'Guardian');
     setUserPhone(formatted);
-    loadVault(formatted);
+    setUserName(tempName || 'Guardian');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('ng_mvp_user');
-    setUserPhone(null);
-    setMyServices([]);
-    setInputPhone('');
+  const handleUpdateProfile = () => {
+    localStorage.setItem('ng_user_name', tempName);
+    setUserName(tempName);
+    setShowProfileModal(false);
   };
 
-  // --- 3. CORE FEATURES ---
-
-  // Feature: Scan (Populate Defaults)
+  // --- SERVICE LOGIC ---
   const handleScan = () => {
     setScanning(true);
     setTimeout(() => {
       const existingNames = new Set(myServices.map(s => s.name));
       const newItems = COMMON_SERVICES
         .filter(s => !existingNames.has(s.name))
-        .map((s, i) => ({
-          ...s,
-          id: Date.now() + i,
-          status: 'pending',
-          addedAt: new Date().toISOString()
-        }));
-      
+        .map((s, i) => ({ ...s, id: Date.now() + i, status: 'pending' }));
       saveVault(userPhone, [...myServices, ...newItems]);
       setScanning(false);
-    }, 1200); // Fake delay for UX
+    }, 1500);
   };
 
-  // Feature: Add Custom
-  const handleAddCustom = () => {
-    if (!newServiceName) return;
-    const newItem = {
-      id: Date.now(),
-      name: newServiceName,
-      category: 'Custom',
-      riskLevel: 'Medium',
-      updateUrl: `https://google.com/search?q=${newServiceName}+change+phone+number`,
-      status: 'pending',
-      addedAt: new Date().toISOString()
-    };
-    saveVault(userPhone, [...myServices, newItem]);
-    setNewServiceName('');
-    setShowAddModal(false);
-  };
-
-  // Feature: Update Status
   const updateStatus = (id, status) => {
-    const updated = myServices.map(s => s.id === id ? { ...s, status } : s);
-    saveVault(userPhone, updated);
+    saveVault(userPhone, myServices.map(s => s.id === id ? { ...s, status } : s));
     setShowUpiWarning(null);
   };
 
-  // Feature: UPI Safety Check
-  const requestMarkDone = (service) => {
-    if (service.isUpi || service.category === 'Finance') {
-      setShowUpiWarning(service);
-    } else {
-      updateStatus(service.id, 'updated');
-    }
-  };
-
-  // Feature: WhatsApp Broadcast
-  const sendBroadcast = () => {
-    const name = "I";
+  const handleWhatsAppBroadcast = () => {
+    const name = userName && userName !== 'Guardian' ? userName : "I";
     const oldNum = userPhone;
     const newNum = broadcastNewNumber || "[My New Number]";
-    const text = `Hello! ${name} have changed my number.\n\nOld: ${oldNum}\nNew: ${newNum}\n\nPlease update your contact list! 📱\n\n(Sent via NumberGuard)`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+
+    const message = `Hello! ${name} have changed my number.\n\nOld: ${oldNum}\nNew: ${newNum}\n\nPlease update your contact list! 📱\n\n(Secured by NumberGuard)`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
     setShowBroadcastModal(false);
   };
 
-  // Metrics
+  // --- DATA PORTABILITY ---
+  const exportData = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(myServices));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", `numberguard_backup_${userPhone}.json`);
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  };
+
+  const importData = (e) => {
+    const fileReader = new FileReader();
+    fileReader.readAsText(e.target.files[0], "UTF-8");
+    fileReader.onload = e => {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (Array.isArray(imported)) {
+          saveVault(userPhone, imported);
+        }
+      } catch (err) {
+        alert("Invalid backup file.");
+      }
+    };
+  };
+
+  // --- FILTERING & SORTING ---
+  const filteredAndSortedServices = useMemo(() => {
+    return myServices
+      .filter(s => {
+        const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = filterCategory === 'All' || s.category === filterCategory;
+        return matchesSearch && matchesCategory;
+      })
+      .sort((a, b) => {
+        // Critical first
+        if (a.riskLevel === 'Critical' && b.riskLevel !== 'Critical') return -1;
+        if (a.riskLevel !== 'Critical' && b.riskLevel === 'Critical') return 1;
+        // Then Pending vs Updated
+        if (a.status === 'pending' && b.status === 'updated') return -1;
+        if (a.status === 'updated' && b.status === 'pending') return 1;
+        return 0;
+      });
+  }, [myServices, searchQuery, filterCategory]);
+
   const progress = myServices.length > 0 
     ? Math.round((myServices.filter(s => s.status === 'updated').length / myServices.length) * 100) 
     : 0;
-  const pendingCritical = myServices.filter(s => s.status === 'pending' && s.riskLevel === 'Critical').length;
 
-  // --- VIEW: LOGIN ---
   if (!userPhone) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center p-6">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <div className="inline-flex p-4 rounded-2xl bg-indigo-500/10 mb-4 shadow-2xl shadow-indigo-500/10 ring-1 ring-indigo-500/20">
+      <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center p-6 selection:bg-indigo-500/30">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-md w-full">
+          <div className="text-center mb-10">
+            <motion.div animate={{ rotate: [0, -10, 10, 0] }} transition={{ repeat: Infinity, duration: 5 }} className="inline-flex p-5 rounded-3xl bg-indigo-600/20 mb-6 shadow-2xl shadow-indigo-500/20 ring-1 ring-indigo-500/30">
               <Shield size={48} className="text-indigo-500" />
-            </div>
-            <h1 className="text-4xl font-bold text-white mb-2">NumberGuard</h1>
-            <p className="text-slate-400">Your personal digital identity vault.</p>
+            </motion.div>
+            <h1 className="text-5xl font-black text-white mb-3 tracking-tight italic">NumberGuard</h1>
+            <p className="text-slate-400 font-medium tracking-wide">Digital Migration Management</p>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-            <div className="flex items-center gap-2 mb-6 text-xs text-emerald-400 bg-emerald-950/30 p-2 rounded-lg border border-emerald-900/50">
-              <Database size={14} />
-              <span>MVP Mode: Data stays on this device.</span>
-            </div>
-
-            <form onSubmit={handleLogin} className="space-y-4">
+          <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-8 rounded-3xl shadow-2xl">
+            <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Phone Number</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-3.5 text-slate-500 font-mono">+91</span>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Your Name</label>
+                <input 
+                  type="text" 
+                  value={tempName}
+                  onChange={(e) => setTempName(e.target.value)}
+                  placeholder="e.g. Rithin"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 px-4 text-white outline-none focus:border-indigo-500/50 transition-all mb-4"
+                />
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Phone Identity</label>
+                <div className="relative group">
+                  <span className="absolute left-4 top-4 text-slate-500 font-mono">+91</span>
                   <input 
                     type="tel" 
                     value={inputPhone}
-                    onChange={(e) => setInputPhone(e.target.value)}
+                    onChange={(e) => setInputPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                     placeholder="98XXX XXXXX"
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-white outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-mono"
-                    autoFocus
+                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl py-4 pl-14 pr-4 text-white outline-none group-focus-within:border-indigo-500/50 transition-all font-mono text-lg"
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full py-3 text-lg" disabled={inputPhone.length < 10}>
+              <Button type="submit" className="w-full py-4 text-lg" disabled={inputPhone.length < 10}>
                 Open Vault
               </Button>
             </form>
           </div>
-        </div>
+
+          {/* --- WATERMARK FOOTER (LOGIN SCREEN) --- */}
+          <div className="mt-12 text-center">
+            <div className="flex items-center justify-center gap-2 text-slate-600 mb-2 opacity-50">
+              <Shield size={14} />
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em]">NumberGuard Core v1.2</span>
+            </div>
+            <p className="text-slate-500 text-sm font-medium">
+              Built with precision by <span className="text-indigo-400 font-bold tracking-tight">Ravoori Rithin</span> © 2026
+            </p>
+          </div>
+
+        </motion.div>
       </div>
     );
   }
 
-  // --- VIEW: DASHBOARD ---
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30">
-      
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/60">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-white font-bold text-lg">
-            <Shield className="text-indigo-500" size={24} />
-            <span className="hidden sm:inline">NumberGuard</span>
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans pb-12 selection:bg-indigo-500/30">
+      {/* --- NAVBAR --- */}
+      <nav className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-500/30">
+              <Shield className="text-white" size={20} />
+            </div>
+            <span className="font-black text-xl text-white italic tracking-tighter hidden sm:block uppercase">NUMBERGUARD</span>
           </div>
           
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" className="text-xs h-9 hidden sm:flex" icon={Share2} onClick={() => setShowBroadcastModal(true)}>
-              Broadcast
+          <div className="flex items-center gap-4">
+            <Button 
+               variant="outline" 
+               className="hidden sm:flex text-xs py-1.5 h-9 bg-slate-900 border-slate-800 hover:bg-slate-800" 
+               icon={Share2}
+               onClick={() => setShowBroadcastModal(true)}
+            >
+               Notify Contacts
             </Button>
-            <div className="h-9 px-3 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-2 text-sm text-slate-400 font-mono">
-              <Smartphone size={14} /> {userPhone}
+            <button 
+              onClick={() => { setTempName(userName); setShowProfileModal(true); }}
+              className="flex items-center gap-3 bg-slate-900 border border-slate-800 pl-2 pr-4 py-1.5 rounded-xl hover:bg-slate-800 transition-all"
+            >
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                <User size={16} />
+              </div>
+              <div className="flex flex-col items-start leading-none">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">User</span>
+                <span className="text-xs font-bold text-white">{userName}</span>
+              </div>
+            </button>
+            <div className="h-10 w-px bg-slate-800 hidden sm:block"></div>
+            <div className="hidden lg:flex flex-col items-end">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Linked ID</span>
+              <span className="text-xs font-mono text-indigo-400">{userPhone}</span>
             </div>
-            <button onClick={handleLogout} className="p-2 text-slate-500 hover:text-white transition-colors">
+            <button 
+              onClick={() => { localStorage.clear(); window.location.reload(); }}
+              className="p-2.5 rounded-xl bg-slate-900 hover:bg-red-500/10 hover:text-red-400 transition-all text-slate-500"
+            >
               <LogOut size={20} />
             </button>
           </div>
         </div>
-      </header>
+      </nav>
 
-      <main className="max-w-5xl mx-auto p-4 space-y-6 pb-24">
-        
-        {/* Hero / Scanner */}
-        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-900/40 via-slate-900 to-slate-900 border border-indigo-500/20 p-6 sm:p-8">
-          <div className="relative z-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">Secure your digital footprint.</h2>
-            <p className="text-slate-400 mb-6 max-w-lg">
-              Changing numbers? Scan to find high-risk accounts linked to your old number and update them before it's recycled.
+      <main className="max-w-7xl mx-auto px-6 pt-10 space-y-8">
+        {/* --- HERO SECTION --- */}
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="relative group overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 to-indigo-900 p-8 sm:p-12 shadow-2xl shadow-indigo-500/10">
+          <div className="relative z-10 max-w-2xl">
+            <div className="flex justify-between items-start">
+              <h2 className="text-3xl sm:text-5xl font-black text-white mb-4 leading-tight italic uppercase tracking-tighter">Safe Passage.</h2>
+              <button 
+                onClick={() => setShowBroadcastModal(true)}
+                className="sm:hidden p-3 bg-white/10 hover:bg-white/20 text-white rounded-full shadow-lg backdrop-blur-md transition-all"
+              >
+                <Share2 size={20} />
+              </button>
+            </div>
+            <p className="text-indigo-100 text-lg mb-8 leading-relaxed opacity-90">
+              Welcome back, <span className="font-bold underline decoration-indigo-300">{userName}</span>. Indian telecom numbers are recycled after 90 days. Secure your linked services today.
             </p>
-            <Button 
-              onClick={handleScan} 
-              disabled={scanning} 
-              className="w-full sm:w-auto py-3 px-6"
-              icon={scanning ? RefreshCw : Search}
-            >
-              {scanning ? 'Scanning Ecosystem...' : 'Identify Linked Accounts'}
-            </Button>
-          </div>
-          {/* Decorative Background */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[80px] rounded-full pointer-events-none -mr-16 -mt-16"></div>
-        </section>
-
-        {/* Risk Alert Banner */}
-        {pendingCritical > 0 && (
-          <div className="rounded-xl bg-orange-500/10 border border-orange-500/20 p-4 flex gap-4 items-start">
-            <AlertOctagon className="text-orange-500 shrink-0 mt-1" size={24} />
-            <div>
-              <h3 className="text-orange-200 font-bold">Recycle Risk Detected</h3>
-              <p className="text-sm text-orange-200/70 mt-1">
-                You have <strong>{pendingCritical} critical services</strong> (like Banks/UPI) pending. 
-                Telecom operators may recycle your old number after 90 days. Update these immediately.
-              </p>
+            <div className="flex flex-wrap gap-4">
+              <Button onClick={handleScan} loading={scanning} className="bg-white text-indigo-600 hover:bg-slate-100 px-8 py-4" icon={Search}>
+                {scanning ? 'Detecting Services...' : 'Scan Ecosystem'}
+              </Button>
+              <Button variant="outline" className="bg-indigo-500/20 border-indigo-400/30 text-white hover:bg-indigo-500/30" onClick={() => setShowAddModal(true)} icon={Plus}>
+                Add Custom
+              </Button>
             </div>
           </div>
-        )}
+          <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 8, repeat: Infinity }} className="absolute top-0 right-0 w-96 h-96 bg-white/10 blur-[100px] rounded-full -mr-20 -mt-20" />
+        </motion.div>
 
-        {/* Stats / Progress */}
-        {myServices.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-              <div className="text-slate-500 text-xs mb-1">Total Services</div>
-              <div className="text-2xl font-bold text-white">{myServices.length}</div>
+        {/* --- SEARCH & TOOLS --- */}
+        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+          <div className="flex items-center gap-4 w-full lg:max-w-md">
+            <div className="relative flex-1 group">
+              <Search className="absolute left-4 top-3.5 text-slate-500 group-focus-within:text-indigo-500 transition-colors" size={20} />
+              <input 
+                type="text" 
+                placeholder="Search services..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-white outline-none focus:border-indigo-500/50 transition-all"
+              />
             </div>
-            <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-              <div className="text-slate-500 text-xs mb-1">Pending</div>
-              <div className="text-2xl font-bold text-amber-400">{myServices.length - myServices.filter(s => s.status === 'updated').length}</div>
+            <div className="relative group">
+              <Filter className="absolute left-4 top-3.5 text-slate-500" size={20} />
+              <select 
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="appearance-none bg-slate-900 border border-slate-800 rounded-2xl py-3.5 pl-12 pr-10 text-white outline-none focus:border-indigo-500/50 transition-all cursor-pointer"
+              >
+                <option>All</option>
+                <option>Finance</option>
+                <option>Govt</option>
+                <option>Tech</option>
+                <option>Shopping</option>
+              </select>
+              <ChevronDown className="absolute right-4 top-4 text-slate-500 pointer-events-none" size={16} />
             </div>
-            <div className="col-span-2 bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col justify-center">
-              <div className="flex justify-between text-xs text-slate-400 mb-2">
-                <span>Migration Progress</span>
-                <span className="text-white font-bold">{progress}%</span>
+          </div>
+          
+          <div className="flex items-center gap-3 w-full lg:w-auto">
+            <Button variant="outline" className="flex-1 lg:flex-none text-xs" icon={Download} onClick={exportData}>Export Backup</Button>
+            <label className="flex-1 lg:flex-none">
+              <input type="file" className="hidden" accept=".json" onChange={importData} />
+              <div className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-400 text-xs font-medium cursor-pointer transition-all">
+                <Upload size={14} /> Import Data
               </div>
-              <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${progress}%` }}></div>
-              </div>
-            </div>
+            </label>
           </div>
-        )}
-
-        {/* Service List */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold text-white">Action Items</h3>
-            <Button variant="outline" className="text-xs" icon={Plus} onClick={() => setShowAddModal(true)}>
-              Add Custom
-            </Button>
-          </div>
-
-          {loading ? (
-            <div className="text-center py-12 text-slate-600 animate-pulse">Loading Vault...</div>
-          ) : myServices.length === 0 ? (
-            <div className="text-center py-16 border-2 border-dashed border-slate-800 rounded-2xl bg-slate-900/50">
-              <Search className="mx-auto text-slate-700 mb-4" size={32} />
-              <p className="text-slate-500">Vault is empty.</p>
-              <p className="text-slate-600 text-sm">Click "Identify Linked Accounts" to start.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {myServices
-                .sort((a, b) => (a.status === b.status ? 0 : a.status === 'pending' ? -1 : 1))
-                .map(service => (
-                  <ServiceCard 
-                    key={service.id} 
-                    service={service}
-                    onUpdateStatus={updateStatus}
-                    onDelete={() => {
-                      const newList = myServices.filter(s => s.id !== service.id);
-                      saveVault(userPhone, newList);
-                    }}
-                    onMarkDoneRequest={requestMarkDone}
-                  />
-                ))}
-            </div>
-          )}
         </div>
+
+        {/* --- STATS GRID --- */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <motion.div variants={fadeInUp} initial="initial" animate="animate" className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl flex items-center gap-5">
+            <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500"><Database size={24} /></div>
+            <div>
+              <div className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Vaulted Items</div>
+              <div className="text-3xl font-black text-white">{myServices.length}</div>
+            </div>
+          </motion.div>
+          <motion.div variants={fadeInUp} initial="initial" animate="animate" transition={{ delay: 0.1 }} className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl flex items-center gap-5">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500"><Clock size={24} /></div>
+            <div>
+              <div className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">To Update</div>
+              <div className="text-3xl font-black text-white">{myServices.filter(s => s.status === 'pending').length}</div>
+            </div>
+          </motion.div>
+          <motion.div variants={fadeInUp} initial="initial" animate="animate" transition={{ delay: 0.2 }} className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Migration Progress</span>
+              <span className="text-emerald-400 font-bold">{progress}%</span>
+            </div>
+            <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
+              <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 shadow-[0_0_15px_rgba(16,185,129,0.5)]" />
+            </div>
+          </motion.div>
+        </div>
+
+        {/* --- MAIN GRID --- */}
+        <motion.div variants={staggerContainer} initial="initial" animate="animate" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <AnimatePresence mode="popLayout">
+            {filteredAndSortedServices.map(service => (
+              <ServiceCard 
+                key={service.id} 
+                service={service} 
+                onUpdateStatus={updateStatus}
+                onDelete={(id) => saveVault(userPhone, myServices.filter(s => s.id !== id))}
+                onMarkDoneRequest={(s) => s.isUpi ? setShowUpiWarning(s) : updateStatus(s.id, 'updated')}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
+
+        {filteredAndSortedServices.length === 0 && !scanning && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20 border-2 border-dashed border-slate-800 rounded-3xl bg-slate-900/20">
+            <div className="mb-4 inline-block p-4 rounded-full bg-slate-800/50 text-slate-600"><Search size={40} /></div>
+            <h3 className="text-xl font-bold text-slate-400">No results found</h3>
+            <p className="text-slate-600 text-sm mt-2">Try adjusting your filters or search keywords.</p>
+          </motion.div>
+        )}
       </main>
 
-      {/* MODAL: Add Service */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Add Service</h3>
-              <button onClick={() => setShowAddModal(false)}><X className="text-slate-500 hover:text-white" /></button>
-            </div>
-            <input 
-              autoFocus
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white mb-4 outline-none focus:border-indigo-500"
-              placeholder="Service Name (e.g. Netflix)"
-              value={newServiceName}
-              onChange={e => setNewServiceName(e.target.value)}
-            />
-            <Button className="w-full py-3" onClick={handleAddCustom}>Add to Vault</Button>
-          </div>
+      {/* --- WATERMARK FOOTER --- */}
+      <footer className="mt-20 py-12 border-t border-slate-800/50 text-center">
+        <div className="flex items-center justify-center gap-2 text-slate-600 mb-3 opacity-50">
+          <Shield size={16} />
+          <span className="text-[10px] font-bold uppercase tracking-[0.4em]">NumberGuard Core v1.2</span>
         </div>
-      )}
+        <p className="text-slate-400 text-sm font-medium">
+          Built with precision by <span className="text-indigo-400 font-bold tracking-tight">Ravoori Rithin</span> © 2026
+        </p>
+      </footer>
 
-      {/* MODAL: Broadcast */}
-      {showBroadcastModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <MessageSquare className="text-emerald-500" size={20} /> Notify Contacts
+      {/* --- MODALS --- */}
+      <AnimatePresence>
+        {/* Profile Modal */}
+        {showProfileModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowProfileModal(false)} />
+            <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-8 shadow-2xl">
+              <h3 className="text-2xl font-black text-white mb-6 flex items-center gap-3 italic tracking-tighter uppercase"><Edit2 className="text-indigo-500" /> Edit Profile</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Display Name</label>
+                  <input 
+                    type="text" 
+                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white outline-none focus:border-indigo-500 transition-all"
+                    value={tempName}
+                    onChange={e => setTempName(e.target.value)}
+                    placeholder="New name..."
+                  />
+                </div>
+              </div>
+              <div className="flex gap-4 mt-8">
+                <Button variant="outline" className="flex-1" onClick={() => setShowProfileModal(false)}>Cancel</Button>
+                <Button className="flex-1" onClick={handleUpdateProfile}>Save Changes</Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Add Service Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowAddModal(false)} />
+            <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative bg-slate-900 border border-slate-700 w-full max-w-md rounded-3xl p-8 shadow-2xl">
+              <h3 className="text-2xl font-black text-white mb-6 italic tracking-tighter uppercase">Add Custom Service</h3>
+              <input 
+                autoFocus
+                className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white mb-6 outline-none focus:border-indigo-500 transition-all"
+                placeholder="Service Name (e.g. Netflix, LinkedIn)"
+                value={newServiceName}
+                onChange={e => setNewServiceName(e.target.value)}
+              />
+              <div className="flex gap-4">
+                <Button variant="outline" className="flex-1" onClick={() => setShowAddModal(false)}>Cancel</Button>
+                <Button className="flex-1" onClick={() => {
+                  const s = { id: Date.now(), name: newServiceName, category: 'Custom', riskLevel: 'Medium', status: 'pending', updateUrl: `https://www.google.com/search?q=change+phone+number+on+${newServiceName}` };
+                  saveVault(userPhone, [...myServices, s]);
+                  setNewServiceName('');
+                  setShowAddModal(false);
+                }}>Add Item</Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Broadcast Modal */}
+        {showBroadcastModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setShowBroadcastModal(false)} />
+            <motion.div initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }} className="relative bg-slate-900 border border-slate-800 w-full max-w-md rounded-3xl p-8 shadow-2xl">
+              <h3 className="text-2xl font-black text-white mb-6 flex items-center gap-3 italic tracking-tighter uppercase">
+                <MessageSquare className="text-emerald-500" /> Notify Contacts
               </h3>
-              <button onClick={() => setShowBroadcastModal(false)}><X className="text-slate-500 hover:text-white" /></button>
-            </div>
-            <p className="text-slate-400 text-sm mb-4">Send a pre-filled message via WhatsApp.</p>
-            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 mb-4 text-xs font-mono text-slate-300">
-              Hello! I have changed my number.<br/>
-              <span className="text-red-400">Old: {userPhone}</span><br/>
-              <span className="text-emerald-400">New: {broadcastNewNumber || "..."}</span>
-            </div>
-            <input 
-              className="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-white mb-4 outline-none focus:border-emerald-500"
-              placeholder="Enter New Number (+91...)"
-              value={broadcastNewNumber}
-              onChange={e => setBroadcastNewNumber(e.target.value)}
-            />
-            <Button variant="whatsapp" className="w-full py-3" icon={Share2} onClick={sendBroadcast}>Open WhatsApp</Button>
-          </div>
-        </div>
-      )}
+              <p className="text-slate-400 text-sm mb-6">Send a pre-formatted broadcast message to your friends and family via WhatsApp.</p>
 
-      {/* MODAL: UPI Warning */}
-      {showUpiWarning && (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-red-500/50 w-full max-w-sm rounded-2xl p-6 text-center relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-red-500"></div>
-            <AlertOctagon className="text-red-500 mx-auto mb-4" size={48} />
-            <h3 className="text-2xl font-bold text-white mb-2">STOP!</h3>
-            <p className="text-slate-300 mb-6">
-              You are removing <strong className="text-white">{showUpiWarning.name}</strong>. 
-              Did you <span className="text-red-400 underline">deregister your UPI ID</span> inside the app first?
-            </p>
-            <div className="flex gap-3">
-              <Button variant="secondary" className="flex-1" onClick={() => setShowUpiWarning(null)}>Check Again</Button>
-              <Button variant="danger" className="flex-1" onClick={() => requestMarkDone({ ...showUpiWarning, isUpi: false })}>Yes, I'm Safe</Button>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 mb-6 font-mono text-xs text-slate-300">
+                 <p>Hello! {userName !== 'Guardian' ? userName : 'I'} have changed my number.</p>
+                 <p className="mt-2 text-red-400">Old: {userPhone}</p>
+                 <p className="text-emerald-400">New: {broadcastNewNumber || "[Your New Number]"}</p>
+                 <p className="mt-2">Please update your contact list! 📱</p>
+              </div>
 
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Your New Number (Optional)</label>
+                  <input
+                    type="tel"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white outline-none focus:border-emerald-500 transition-all"
+                    placeholder="+91..."
+                    value={broadcastNewNumber}
+                    onChange={(e) => setBroadcastNewNumber(e.target.value)}
+                  />
+                </div>
+
+                <Button
+                  className="w-full py-4 text-lg"
+                  variant="whatsapp"
+                  onClick={handleWhatsAppBroadcast}
+                  icon={Share2}
+                >
+                  Open WhatsApp
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => setShowBroadcastModal(false)}>Cancel</Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* UPI Warning Modal */}
+        {showUpiWarning && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-red-950/60 backdrop-blur-md" />
+            <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 50 }} className="relative bg-slate-900 border border-red-500/50 w-full max-w-md rounded-3xl p-8 text-center shadow-[0_0_50px_rgba(239,68,68,0.3)]">
+              <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500">
+                <AlertOctagon size={48} />
+              </div>
+              <h3 className="text-3xl font-black text-white mb-4 italic uppercase tracking-tighter">Security Stop!</h3>
+              <p className="text-slate-300 mb-8 leading-relaxed">
+                You are marking <strong className="text-white">{showUpiWarning.name}</strong> as secured. Have you <span className="text-red-400 font-bold underline underline-offset-4 tracking-tight">DEREGISTERED your UPI ID</span> inside the app first?
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <Button variant="secondary" onClick={() => setShowUpiWarning(null)}>Go Back</Button>
+                <Button variant="danger" className="bg-red-600 hover:bg-red-500 text-white" onClick={() => updateStatus(showUpiWarning.id, 'updated')}>Yes, Deregistered</Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
-}
+        }
