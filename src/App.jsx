@@ -2,15 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, 
-  Smartphone, 
   Search, 
-  CheckCircle, 
   ExternalLink, 
-  AlertTriangle, 
   RefreshCw, 
   Plus, 
   Trash2, 
-  X, 
   MessageSquare, 
   Share2, 
   AlertOctagon, 
@@ -49,7 +45,6 @@ const staggerContainer = {
 };
 
 // --- COMPONENTS ---
-
 const Button = ({ children, onClick, variant = 'primary', className = '', icon: Icon, disabled = false, loading = false }) => {
   const variants = {
     primary: "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20",
@@ -261,10 +256,8 @@ export default function App() {
         return matchesSearch && matchesCategory;
       })
       .sort((a, b) => {
-        // Critical first
         if (a.riskLevel === 'Critical' && b.riskLevel !== 'Critical') return -1;
         if (a.riskLevel !== 'Critical' && b.riskLevel === 'Critical') return 1;
-        // Then Pending vs Updated
         if (a.status === 'pending' && b.status === 'updated') return -1;
         if (a.status === 'updated' && b.status === 'pending') return 1;
         return 0;
@@ -326,7 +319,6 @@ export default function App() {
               Built with precision by <span className="text-indigo-400 font-bold tracking-tight">Ravoori Rithin</span> © 2026
             </p>
           </div>
-
         </motion.div>
       </div>
     );
@@ -500,7 +492,7 @@ export default function App() {
         )}
       </main>
 
-      {/* --- WATERMARK FOOTER --- */}
+      {/* --- WATERMARK FOOTER (DASHBOARD) --- */}
       <footer className="mt-20 py-12 border-t border-slate-800/50 text-center">
         <div className="flex items-center justify-center gap-2 text-slate-600 mb-3 opacity-50">
           <Shield size={16} />
@@ -630,4 +622,4 @@ export default function App() {
       </AnimatePresence>
     </div>
   );
-        }
+}
