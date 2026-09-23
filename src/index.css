@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Space Grotesk", ui-sans-serif, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* surface scale — deep green-tinted charcoal */
+  --color-ink-950: #060a09;
+  --color-ink-900: #0a100e;
+  --color-ink-850: #0e1613;
+  --color-ink-800: #121c18;
+  --color-ink-750: #17231e;
+  --color-ink-700: #1d2d26;
+  --color-ink-600: #27392f;
+
+  --color-line: #21312a;
+  --color-line-soft: #1a2721;
+
+  /* signal mint — primary / safe */
+  --color-mint-200: #b8f7d9;
+  --color-mint-300: #7ff0c0;
+  --color-mint-400: #46e3a0;
+  --color-mint-500: #2bcf8c;
+  --color-mint-600: #1ba86f;
+  --color-mint-700: #158357;
+
+  /* flare — critical / danger */
+  --color-flare-300: #ffa196;
+  --color-flare-400: #ff7a6b;
+  --color-flare-500: #f2544b;
+  --color-flare-600: #d43d35;
+
+  /* warning amber */
+  --color-gold-300: #ffd98a;
+  --color-gold-400: #f5b84b;
+  --color-gold-500: #e09c22;
+
+  /* info sky */
+  --color-skyx-300: #9edcf2;
+  --color-skyx-400: #5ec2e8;
+  --color-skyx-500: #37a5cd;
+
+  /* text */
+  --color-paper: #e8f1ec;
+  --color-mist: #8ea79c;
+  --color-faint: #5d746a;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ink-950);
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(43, 207, 140, 0.28);
+  color: #eafff5;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #27392f transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #27392f;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* fine grid backdrop used behind the app shell */
+.console-grid {
+  background-image:
+    linear-gradient(rgba(122, 168, 148, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(122, 168, 148, 0.045) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.pulse-dot {
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7) sepia(0.2) hue-rotate(100deg);
+  cursor: pointer;
+}
