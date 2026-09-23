@@ -1,5 +1,7 @@
 export type RiskLevel = "critical" | "high" | "medium" | "low";
 export type TaskStatus = "pending" | "in_progress" | "done" | "skipped";
+export type ContactGroup = "Family" | "Work" | "Finance" | "Other";
+export type Theme = "dark" | "light";
 
 export const CATEGORIES = [
   "Identity",
@@ -12,6 +14,8 @@ export const CATEGORIES = [
   "Lifestyle",
 ] as const;
 export type Category = (typeof CATEGORIES)[number];
+
+export const CONTACT_GROUPS: ContactGroup[] = ["Family", "Work", "Finance", "Other"];
 
 export interface CatalogService {
   name: string;
@@ -26,6 +30,7 @@ export interface Service extends CatalogService {
   id: string;
   status: TaskStatus;
   stepDone: boolean[];
+  notes?: string;
   custom?: boolean;
   addedAt: number;
   doneAt?: number;
@@ -35,7 +40,34 @@ export interface Contact {
   id: string;
   name: string;
   number: string; // 10 digits
+  group: ContactGroup;
   notified: boolean;
+}
+
+export type ActivityKind =
+  | "created"
+  | "scan"
+  | "status"
+  | "step"
+  | "note"
+  | "contact"
+  | "vpa"
+  | "date"
+  | "data"
+  | "incident";
+
+export interface Activity {
+  id: string;
+  at: number;
+  kind: ActivityKind;
+  text: string;
+}
+
+export interface Snapshot {
+  date: string; // yyyy-mm-dd
+  exposure: number;
+  done: number;
+  total: number;
 }
 
 export interface Vault {
@@ -45,12 +77,17 @@ export interface Vault {
   services: Service[];
   contacts: Contact[];
   messageTemplate?: string;
-  vpaDone?: string[]; // completed ids of the global VPA protocol
+  vpaDone: string[];
+  activity: Activity[];
+  snapshots: Snapshot[];
+  incident: { active: boolean; done: string[] };
   createdAt: number;
   updatedAt: number;
 }
 
-export type TabId = "dashboard" | "checklist" | "upi" | "broadcast" | "spec";
+export type TabId = "dashboard" | "checklist" | "plan" | "upi" | "broadcast" | "spec";
+
+export const TAB_IDS: TabId[] = ["dashboard", "checklist", "plan", "upi", "broadcast", "spec"];
 
 export const RISK_WEIGHT: Record<RiskLevel, number> = {
   critical: 25,

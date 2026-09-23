@@ -5,7 +5,7 @@
   --font-sans: "Manrope", ui-sans-serif, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  /* surface scale — deep green-tinted charcoal */
+  /* surface scale — deep green-tinted charcoal (dark theme values) */
   --color-ink-950: #060a09;
   --color-ink-900: #0a100e;
   --color-ink-850: #0e1613;
@@ -16,6 +16,7 @@
 
   --color-line: #21312a;
   --color-line-soft: #1a2721;
+  --color-scrim: rgba(4, 8, 7, 0.72);
 
   /* signal mint — primary / safe */
   --color-mint-200: #b8f7d9;
@@ -45,46 +46,96 @@
   --color-paper: #e8f1ec;
   --color-mist: #8ea79c;
   --color-faint: #5d746a;
+
+  --grid-line: rgba(122, 168, 148, 0.05);
 }
 
-html {
-  color-scheme: dark;
+/* ---------------- light / daylight theme ---------------- */
+/* unlayered so these beat the @layer theme :root defaults */
+.light {
+  color-scheme: light;
+
+  --color-ink-950: #f4f8f5;
+  --color-ink-900: #eaf1ec;
+  --color-ink-850: #ffffff;
+  --color-ink-800: #eaf1ed;
+  --color-ink-750: #e2ebe5;
+  --color-ink-700: #dbe6df;
+  --color-ink-600: #c9d8cf;
+
+  --color-line: #d5e2da;
+  --color-line-soft: #e3ece6;
+  --color-scrim: rgba(12, 30, 22, 0.35);
+
+  --color-mint-200: #0b5c39;
+  --color-mint-300: #0c6b43;
+  --color-mint-400: #0f8a55;
+  --color-mint-500: #0d8451;
+  --color-mint-600: #0b6b42;
+  --color-mint-700: #08512f;
+
+  --color-flare-300: #a5241b;
+  --color-flare-400: #c02a20;
+  --color-flare-500: #cf3a2f;
+  --color-flare-600: #a5241b;
+
+  --color-gold-300: #7d5400;
+  --color-gold-400: #a06c05;
+  --color-gold-500: #8a5c00;
+
+  --color-skyx-300: #125a75;
+  --color-skyx-400: #157292;
+  --color-skyx-500: #0f5f7c;
+
+  --color-paper: #0c1710;
+  --color-mist: #4a6156;
+  --color-faint: #778b81;
+
+  --grid-line: rgba(24, 62, 42, 0.07);
 }
 
-body {
-  background: var(--color-ink-950);
-  color: var(--color-paper);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--color-ink-950);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-mint-500) 30%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-mint-500);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ink-600) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-ink-600);
+    border-radius: 8px;
+  }
 }
 
-::selection {
-  background: rgba(43, 207, 140, 0.28);
-  color: #eafff5;
-}
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #27392f transparent;
-}
-*::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-*::-webkit-scrollbar-thumb {
-  background: #27392f;
-  border-radius: 8px;
-}
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-/* fine grid backdrop used behind the app shell */
+/* fine grid backdrop behind the app shell */
 .console-grid {
   background-image:
-    linear-gradient(rgba(122, 168, 148, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(122, 168, 148, 0.045) 1px, transparent 1px);
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 34px 34px;
 }
 
@@ -101,7 +152,16 @@ body {
   animation: pulse-dot 1.6s ease-in-out infinite;
 }
 
+@keyframes scan-sweep {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.7) sepia(0.2) hue-rotate(100deg);
   cursor: pointer;
+  opacity: 0.6;
 }

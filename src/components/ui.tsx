@@ -171,7 +171,9 @@ export function Seg<T extends string>({
           onClick={() => onChange(o.value)}
           className={cn(
             "rounded-md px-2.5 py-1 text-[11px] font-semibold transition-colors",
-            value === o.value ? cn("text-ink-950", toneBar[o.tone ?? "mint"]) : "text-mist hover:text-paper",
+            value === o.value
+              ? cn((o.tone ?? "mint") === "none" ? "text-paper" : "text-ink-950", toneBar[o.tone ?? "mint"])
+              : "text-mist hover:text-paper",
           )}
         >
           {o.label}
@@ -202,13 +204,17 @@ export function Modal({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-ink-950/70 p-4 backdrop-blur-sm sm:items-center"
+          role="presentation"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-scrim p-4 backdrop-blur-sm sm:items-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onMouseDown={onClose}
         >
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
             onMouseDown={(e) => e.stopPropagation()}
             className={cn(
               "max-h-[86vh] w-full overflow-y-auto rounded-2xl border border-line bg-ink-850 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.8)]",

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, KeyRound, Lock, Phone, ScanLine, ShieldCheck, Users } from "lucide-react";
+import { ArrowRight, KeyRound, Lock, MessageSquareWarning, PhoneOff, ShieldCheck, UserMinus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { fmtPhone, isValidIndianMobile, normalizePhone } from "../lib/storage";
 import { Button, inputCls } from "./ui";
@@ -69,8 +69,7 @@ export function VaultGate({
             transition={{ delay: 0.05 }}
             className="mt-3 font-display text-4xl font-bold leading-[1.08] tracking-tight text-paper sm:text-5xl"
           >
-            Your number dies in
-            <span className="text-mint-400"> 90 days</span> of silence. Your accounts shouldn't.
+            Is your phone number a <span className="text-mint-400">security hole?</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 10 }}
@@ -79,14 +78,14 @@ export function VaultGate({
             className="mt-4 max-w-lg text-[15px] leading-relaxed text-mist"
           >
             Telecom operators recycle idle Indian mobile numbers. Whatever is still bound to yours — bank OTPs, UPI IDs,
-            Aadhaar, WhatsApp — passes to the next owner. NumberGuard turns the swap into a deadline-bound checklist.
+            Aadhaar, WhatsApp — passes to the next owner. NumberGuard turns the swap into a deadline-bound checklist. India recycles numbers in as little as 90 days.
           </motion.p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
             {[
-              { icon: <Phone size={16} />, t: "Register the number", d: "The SIM you're dropping, and when" },
-              { icon: <ScanLine size={16} />, t: "Scan & track", d: "Banks, UPI, govt IDs — step by step" },
-              { icon: <Users size={16} />, t: "Notify contacts", d: "One WhatsApp blast, new number" },
+              { icon: <PhoneOff size={16} />, t: "Number deactivated", d: "You stop recharging your old Indian mobile number" },
+              { icon: <UserMinus size={16} />, t: "Stranger gets SIM", d: "The carrier re-issues your number to a new customer" },
+              { icon: <MessageSquareWarning size={16} />, t: "They receive OTPs", d: "Your bank login text codes go straight to their phone" },
             ].map((s, i) => (
               <motion.div
                 key={s.t}

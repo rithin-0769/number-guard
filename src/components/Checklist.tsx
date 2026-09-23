@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronDown, ExternalLink, ListPlus, Plus, Radar, ScanLine, Search, Trash2 } from "lucide-react";
+import { Check, ChevronDown, CheckCheck, ExternalLink, ListPlus, Pin, Plus, Radar, ScanLine, Search, SkipForward, Trash2 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { cn } from "../utils/cn";
 import { CATALOG } from "../data/services";
@@ -14,13 +14,17 @@ function ServiceCard({
   onStatus,
   onToggleStep,
   onDelete,
+  onNote,
 }: {
   svc: Service;
   onStatus: (id: string, status: TaskStatus) => void;
   onToggleStep: (id: string, idx: number) => void;
   onDelete: (id: string) => void;
+  onNote: (id: string, text: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [draft, setDraft] = useState(svc.notes ?? "");
   const stepsDone = svc.stepDone.filter(Boolean).length;
   const monoTone: Record<RiskLevel, string> = {
     critical: "border-flare-500/30 bg-flare-500/10 text-flare-300",
@@ -133,6 +137,65 @@ function ServiceCard({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* notes */}
+      <div className="border-t border-line-soft bg-ink-900/40 px-3 py-2">
+        {noteOpen ? (
+          <div className="space-y-2">
+            <textarea
+              className={`${inputCls} min-h-16 resize-y text-xs`}
+              placeholder="Branch visit needed · CIF 123456 · registered email X…"
+              value={draft}
+              autoFocus
+              onChange={(e) => setDraft(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => {
+                  onNote(svc.id, draft.trim());
+                  setNoteOpen(false);
+                }}
+              >
+                Save note
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setDraft(svc.notes ?? "");
+                  setNoteOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              {svc.notes && (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={() => {
+                    setDraft("");
+                    onNote(svc.id, "");
+                    setNoteOpen(false);
+                  }}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2">
+            <button
+              onClick={() => setNoteOpen(true)}
+              className="flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wide text-faint transition-colors hover:bg-ink-800 hover:text-gold-300"
+            >
+              <Pin size={11} /> {svc.notes ? "edit note" : "add note"}
+            </button>
+            {svc.notes && <p className="min-w-0 flex-1 pt-1 text-[11px] leading-snug text-mist">{svc.notes}</p>}
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 }
@@ -162,6 +225,7 @@ export function ScanModal({
   const [phase, setPhase] = useState(0);
   const [added, setAdded] = useState(0);
   const ranRef = useRef(false);
+  const timersRef = useRef<{ tick?: number; finish?: number }>({});
 
   const tracked = useMemo(() => new Set(vault.services.map((s) => s.name.toLowerCase())), [vault.services]);
   const missingFor = (cat: Category) => CATALOG.filter((c) => c.category === cat && !tracked.has(c.name.toLowerCase()));
@@ -174,9 +238,9 @@ export function ScanModal({
     ranRef.current = false;
     setRunning(true);
     setPhase(0);
-    const iv = setInterval(() => setPhase((p) => Math.min(SCAN_PHASES.length - 1, p + 1)), 420);
-    setTimeout(() => {
-      clearInterval(iv);
+    timersRef.current.tick = window.setInterval(() => setPhase((p) => Math.min(SCAN_PHASES.length - 1, p + 1)), 420);
+    timersRef.current.finish = window.setTimeout(() => {
+      window.clearInterval(timersRef.current.tick);
       if (!ranRef.current) {
         ranRef.current = true;
         setAdded(totalMissing);
@@ -186,6 +250,10 @@ export function ScanModal({
   };
 
   const reset = () => {
+    // cancelling mid-scan must not silently write to the vault
+    window.clearInterval(timersRef.current.tick);
+    window.clearTimeout(timersRef.current.finish);
+    ranRef.current = true;
     setRunning(false);
     setAdded(0);
     setPhase(0);
@@ -400,6 +468,8 @@ export function Checklist({
   onStatus,
   onToggleStep,
   onDelete,
+  onNote,
+  onBulk,
   onOpenScan,
   onOpenAdd,
 }: {
@@ -407,6 +477,8 @@ export function Checklist({
   onStatus: (id: string, status: TaskStatus) => void;
   onToggleStep: (id: string, idx: number) => void;
   onDelete: (id: string) => void;
+  onNote: (id: string, text: string) => void;
+  onBulk: (ids: string[], status: TaskStatus) => void;
   onOpenScan: () => void;
   onOpenAdd: () => void;
 }) {
@@ -420,7 +492,7 @@ export function Checklist({
       (s) =>
         (risk === "all" || s.risk === risk) &&
         (status === "all" || s.status === status) &&
-        (query === "" || s.name.toLowerCase().includes(query)),
+        (query === "" || s.name.toLowerCase().includes(query) || (s.notes ?? "").toLowerCase().includes(query)),
     );
   }, [vault.services, q, risk, status]);
 
@@ -514,12 +586,35 @@ export function Checklist({
                       </span>
                     )}
                   </h3>
-                  <span className="h-px flex-1 ml-4 bg-line-soft" />
+                  <span className="h-px flex-1 mx-3 bg-line-soft" />
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      onClick={() => onBulk(g.items.filter((s) => s.status !== "done").map((s) => s.id), "done")}
+                      className="flex items-center gap-1 rounded-md border border-line px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wide text-faint transition-colors hover:border-mint-500/40 hover:text-mint-300"
+                      title={`Mark every open ${g.cat} service as done`}
+                    >
+                      <CheckCheck size={11} /> all
+                    </button>
+                    <button
+                      onClick={() => onBulk(g.items.filter((s) => s.status !== "skipped").map((s) => s.id), "skipped")}
+                      className="flex items-center gap-1 rounded-md border border-line px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wide text-faint transition-colors hover:border-ink-600 hover:text-mist"
+                      title={`Mark all ${g.cat} services as not applicable`}
+                    >
+                      <SkipForward size={11} /> n/a
+                    </button>
+                  </div>
                 </div>
                 <div className="grid gap-2.5 xl:grid-cols-2">
                   <AnimatePresence>
                     {g.items.map((s) => (
-                      <ServiceCard key={s.id} svc={s} onStatus={onStatus} onToggleStep={onToggleStep} onDelete={onDelete} />
+                      <ServiceCard
+                        key={s.id}
+                        svc={s}
+                        onStatus={onStatus}
+                        onToggleStep={onToggleStep}
+                        onDelete={onDelete}
+                        onNote={onNote}
+                      />
                     ))}
                   </AnimatePresence>
                 </div>
